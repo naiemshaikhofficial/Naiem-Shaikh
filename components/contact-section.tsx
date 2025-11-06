@@ -46,8 +46,8 @@ export function ContactSection() {
             {
               icon: Mail,
               label: "Email",
-              value: "naiem@example.com",
-              href: "mailto:naiem@example.com",
+              value: "naiem@musician.org",
+              href: "mailto:naiem@musician.org",
             },
             {
               icon: MessageSquare,
