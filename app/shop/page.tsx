@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Link from "next/link"
 import { supabase, type Product } from "@/lib/supabase"
 import { cache } from "@/lib/cache"
 import { ProductCard } from "@/components/product-card"
@@ -27,7 +28,10 @@ export default function ShopPage() {
           return
         }
 
-        const { data, error } = await supabase.from("products").select("*").order("is_new", { ascending: false })
+        const { data, error } = await supabase
+          .from("products")
+          .select("*")
+          .order("id", { ascending: false })
 
         if (error) throw error
 
@@ -90,19 +94,20 @@ export default function ShopPage() {
           </div>
 
           {/* Products Grid */}
-          {loading ? (
-            <div className="text-center py-12">
-              <div className="inline-block">
-                <div className="w-8 h-8 border-2 border-[#333333] border-t-[#10a37f] rounded-full animate-spin" />
-              </div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} onAddToCart={addToCart} />
-              ))}
-            </div>
-          )}
+{loading ? (
+  <div className="text-center py-12">
+    <div className="inline-block">
+      <div className="w-8 h-8 border-2 border-[#333333] border-t-[#10a37f] rounded-full animate-spin" />
+    </div>
+  </div>
+) : (
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+    {filteredProducts.map((product) => (
+      // ❌ no <Link> here
+      <ProductCard key={product.id} product={product} onAddToCart={addToCart} />
+    ))}
+  </div>
+)}
 
           {/* Cart Sidebar */}
           {cartOpen && (
@@ -124,7 +129,7 @@ export default function ShopPage() {
                         <div key={item.id} className="flex items-center justify-between glass-card p-4">
                           <div className="flex-1">
                             <h3 className="text-white font-semibold text-sm">{item.name}</h3>
-                            <p className="text-[#10a37f] text-sm">${item.price}</p>
+                            <p className="text-[#10a37f] text-sm">₹{item.price}</p>
                           </div>
                           <button
                             onClick={() => removeFromCart(item.id)}
@@ -139,7 +144,7 @@ export default function ShopPage() {
                     <div className="border-t border-[#333333] pt-4 mb-4">
                       <div className="flex justify-between text-white font-bold text-lg">
                         <span>Total:</span>
-                        <span className="text-[#10a37f]">${getTotalPrice()}</span>
+                        <span className="text-[#10a37f]">₹{getTotalPrice()}</span>
                       </div>
                     </div>
 

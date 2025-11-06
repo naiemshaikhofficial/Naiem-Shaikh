@@ -1,6 +1,6 @@
-// Local storage caching utilities
+// utils/cache.ts
 const CACHE_PREFIX = "naiem_"
-const CACHE_DURATION = 24 * 60 * 60 * 1000 // 24 hours
+const DEFAULT_CACHE_DURATION = 24 * 60 * 60 * 1000 // 24 hours
 
 export interface CacheEntry<T> {
   data: T
@@ -8,11 +8,14 @@ export interface CacheEntry<T> {
 }
 
 export const cache = {
-  set: <T,>(key: string, data: T) => {
+  set<T>(key: string, data: T, duration: number = DEFAULT_CACHE_DURATION) {
+    if (typeof window === "undefined") return // SSR safety
+
     try {
-      const entry: CacheEntry<T> = {
+      const entry: CacheEntry<T> & { duration: number } = {
         data,
         timestamp: Date.now(),
+        duration,
       }
       localStorage.setItem(CACHE_PREFIX + key, JSON.stringify(entry))
     } catch (e) {
@@ -20,13 +23,16 @@ export const cache = {
     }
   },
 
-  get: <T,>(key: string): T | null => {
+  get<T>(key: string): T | null {
+    if (typeof window === "undefined") return null // SSR safety
+
     try {
       const item = localStorage.getItem(CACHE_PREFIX + key)
       if (!item) return null
 
-      const entry: CacheEntry<T> = JSON.parse(item)
-      const isExpired = Date.now() - entry.timestamp > CACHE_DURATION
+      const entry = JSON.parse(item) as CacheEntry<T> & { duration?: number }
+      const duration = entry.duration ?? DEFAULT_CACHE_DURATION
+      const isExpired = Date.now() - entry.timestamp > duration
 
       if (isExpired) {
         localStorage.removeItem(CACHE_PREFIX + key)
@@ -40,7 +46,8 @@ export const cache = {
     }
   },
 
-  remove: (key: string) => {
+  remove(key: string) {
+    if (typeof window === "undefined") return
     try {
       localStorage.removeItem(CACHE_PREFIX + key)
     } catch (e) {
@@ -48,10 +55,12 @@ export const cache = {
     }
   },
 
-  clear: () => {
+  clear() {
+    if (typeof window === "undefined") return
     try {
-      const keys = Object.keys(localStorage).filter((k) => k.startsWith(CACHE_PREFIX))
-      keys.forEach((key) => localStorage.removeItem(key))
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith(CACHE_PREFIX)) localStorage.removeItem(key)
+      })
     } catch (e) {
       console.error("Cache clear error:", e)
     }

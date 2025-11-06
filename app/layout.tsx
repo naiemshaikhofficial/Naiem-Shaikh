@@ -8,7 +8,7 @@ const _geist = Geist({ subsets: ["latin"] })
 const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Naiem Shaikh - Artist, Designer & Digital Creator",
+  title: "Naiem Shaikh",
   description:
     "Explore Naiem Shaikh's digital art, design plugins, courses, and creative products. Modern portfolio and digital store for artists and designers.",
   openGraph: {
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     description: "Explore my digital art, courses, and plugins",
   },
   keywords: "artist, designer, courses, plugins, digital products, creative design",
-    generator: ''
+    generator: 'Naiem Shaikh'
 }
 
 export default function RootLayout({
