@@ -76,7 +76,7 @@ export function HeroSection() {
             backgroundRepeat: "no-repeat",
             backgroundSize: "cover",
             backgroundPosition: "center",
-            filter: "blur(4px)",
+            filter: "blur(7px)",
           }}
         />
 
