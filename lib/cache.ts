@@ -1,6 +1,7 @@
 // utils/cache.ts
 const CACHE_PREFIX = "naiem_"
-const DEFAULT_CACHE_DURATION = 24 * 60 * 60 * 1000 // 24 hours
+const DEFAULT_CACHE_DURATION = 0 // cache expires instantly
+
 
 export interface CacheEntry<T> {
   data: T

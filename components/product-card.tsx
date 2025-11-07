@@ -10,9 +10,9 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, onAddToCart }: ProductCardProps) {
-  // Generate fallback slug if not present (for older rows)
+  // Generate fallback slug if not present
   const slug =
-    product.slug ||
+    product.slug ??
     product.name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-")
 
   return (
@@ -40,7 +40,6 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
       <p className="text-[#999999] text-sm mb-4 line-clamp-2">{product.description}</p>
 
       <div className="flex items-center justify-between">
-        {/* Price now shows INR */}
         <span className="text-[#10a37f] font-bold text-lg">₹{product.price}</span>
         <button
           onClick={() => onAddToCart(product)}

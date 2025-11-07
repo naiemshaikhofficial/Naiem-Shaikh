@@ -2,7 +2,7 @@
 import Link from "next/link"
 import React from "react"
 
-// SVG Icon components for the navigation bar
+// SVG Icon components
 const SpotifyIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="12" cy="12" r="10"></circle>
@@ -49,17 +49,14 @@ const GlobeIcon = () => (
 export function HeroSection() {
   const navLinks = [
     { label: "HOME", href: "/" },
-    { label: "STORE", href: "/shop" },
+    { label: "SHOP", href: "/shop" },
     { label: "CONTACT", href: "/#contact" },
   ]
 
-  const socialIcons = [
-    <SpotifyIcon key="spotify" />,
-    <InstagramIcon key="instagram" />,
-    <FacebookIcon key="facebook" />,
-    <YoutubeIcon key="youtube" />,
-    <BandcampIcon key="bandcamp" />,
-    <GlobeIcon key="globe" />,
+  const socialLinks = [
+    { icon: <SpotifyIcon />, url: "https://open.spotify.com/artist/08cXWillp8iGPYijt84FpO" },
+    { icon: <InstagramIcon />, url: "https://www.instagram.com/naiemShaikhofficial/" },
+    { icon: <YoutubeIcon />, url: "https://www.youtube.com/@naiemshaikh" },
   ]
 
   return (
@@ -71,24 +68,35 @@ export function HeroSection() {
       `}</style>
 
       <section className="relative min-h-screen bg-black flex flex-col items-center justify-center text-white overflow-hidden">
-        {/* Background GIF & Overlay */}
+        {/* Background GIF with blur */}
         <div
-          className="absolute inset-0 w-full h-full bg-cover bg-center z-0"
+          className="absolute inset-0 w-full h-full z-0"
           style={{
             backgroundImage: "url('/Happy Music Festival GIF by Insomniac Events - Find & Share on GIPHY.gif')",
             backgroundRepeat: "no-repeat",
             backgroundSize: "cover",
             backgroundPosition: "center",
+            filter: "blur(4px)",
           }}
         />
-        <div className="absolute inset-0 w-full h-full bg-black/70 z-1" />
 
-        {/* Main Content */}
+        {/* Black overlay */}
+        <div className="absolute inset-0 w-full h-full bg-black/40 z-1" />
+        {/* Bottom fade */}
+        <div className="absolute bottom-0 w-full h-1/3 z-2 bg-gradient-to-t from-black/100 to-black/0" />
+
         <main className="relative z-10 flex flex-col items-center justify-center flex-grow text-center px-4 pt-20 pb-40">
-          <h1 className="font-anton text-7xl md:text-9xl font-black uppercase tracking-widest text-[#F900B4] transform -skew-y-6 drop-shadow-[0_0_10px_rgba(249,0,180,0.8)]">
-            Naiem Shaikh
-          </h1>
-          <p className="mt-8 text-lg tracking-[0.2em] font-light">
+          {/* PNG Text */}
+          <div className="w-full max-w-lg">
+            <img
+  src="https://imagizer.imageshack.com/img923/2457/VbSgG9.png"
+  alt="Naiem Shaikh"
+  className="w-full h-auto object-contain drop-shadow-[0_0_15px_rgba(249,0,180,0.9)] select-none"
+  draggable={false}
+/>
+          </div>
+
+          <p className="mt-8 text-lg tracking-[0.2em] font-light text-white">
             FOLLOW <span className="mx-2 text-gray-500">|</span> ON SPOTIFY
           </p>
           <a
@@ -101,23 +109,31 @@ export function HeroSection() {
           </a>
         </main>
 
-        {/* Bottom Navigation */}
+        {/* Footer navigation */}
         <footer className="absolute bottom-0 left-0 right-0 z-20 w-full p-4 md:p-6">
           <nav className="flex flex-wrap justify-center items-center gap-x-6 gap-y-4 md:gap-x-8 text-sm uppercase tracking-wider">
             {navLinks.map((link) => (
               <Link
                 key={link.label}
                 href={link.href}
-                className={`font-semibold transition-colors duration-300 text-cyan-400 hover:text-white ${link.label === "HOME" ? "border-b-2 border-cyan-400 pb-1" : ""}`}
+                className={`font-semibold transition-colors duration-300 text-cyan-400 hover:text-white ${
+                  link.label === "HOME" ? "border-b-2 border-cyan-400 pb-1" : ""
+                }`}
               >
                 {link.label}
               </Link>
             ))}
             <div className="flex items-center gap-4 md:gap-6 text-cyan-400">
-              {socialIcons.map((icon, index) => (
-                <Link href="#" key={index} className="hover:text-white transition-colors duration-300">
-                  {icon}
-                </Link>
+              {socialLinks.map((social, index) => (
+                <a
+                  key={index}
+                  href={social.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-white transition-colors duration-300"
+                >
+                  {social.icon}
+                </a>
               ))}
             </div>
           </nav>
