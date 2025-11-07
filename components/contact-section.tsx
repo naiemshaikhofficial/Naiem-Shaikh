@@ -1,14 +1,22 @@
 "use client"
 
-import type React from "react"
-
-import { useState } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { Mail, MapPin, MessageSquare } from "lucide-react"
 
 export function ContactSection() {
   const [formData, setFormData] = useState({ name: "", email: "", message: "" })
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+
+  // Ref for scrolling
+  const sectionRef = useRef<HTMLElement>(null)
+
+  // Scroll to section if URL has #contact
+  useEffect(() => {
+    if (window.location.hash === "#contact" && sectionRef.current) {
+      sectionRef.current.scrollIntoView({ behavior: "smooth" })
+    }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -34,33 +42,20 @@ export function ContactSection() {
   }
 
   return (
-    <section id="contact" className="py-20 bg-black">
+    <section ref={sectionRef} id="contact" className="py-20 bg-black">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Section Header */}
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">Get In Touch</h2>
           <p className="text-[#999999] text-lg">Have questions? Let's connect</p>
         </div>
 
+        {/* Contact Info Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
           {[
-            {
-              icon: Mail,
-              label: "Email",
-              value: "naiem@musician.org",
-              href: "mailto:naiem@musician.org",
-            },
-            {
-              icon: MessageSquare,
-              label: "Discord",
-              value: "Join Community",
-              href: "https://discord.com",
-            },
-            {
-              icon: MapPin,
-              label: "Location",
-              value: "Worldwide",
-              href: "#",
-            },
+            { icon: Mail, label: "Email", value: "naiem@musician.org", href: "mailto:naiem@musician.org" },
+            { icon: MessageSquare, label: "Discord", value: "Join Community", href: "https://discord.com" },
+            { icon: MapPin, label: "Location", value: "Worldwide", href: "#" },
           ].map(({ icon: Icon, label, value, href }) => (
             <a key={label} href={href} className="glass-card hover-lift p-6 text-center group">
               <Icon className="w-8 h-8 text-[#10a37f] mx-auto mb-4 group-hover:scale-110 smooth-transition" />
