@@ -9,92 +9,136 @@ export interface CartItem extends Product {
 
 export function useCart() {
   const [cart, setCart] = useState<CartItem[]>([])
+  const userId = "current_user_id" // TODO: replace with auth user id if logged in
 
-  // Load cart from localStorage & Supabase on mount
+  // Load cart from DB / localStorage
   useEffect(() => {
     const fetchCart = async () => {
       try {
-        const { data, error } = await supabase.from("cart").select("*")
-        if (error) throw error
-        if (data) {
-          setCart(data)
-          localStorage.setItem("cart", JSON.stringify(data))
+        if (userId) {
+          const { data, error } = await supabase
+            .from("cart")
+            .select("*")
+            .eq("user_id", userId)
+          if (error) throw error
+          if (data) setCart(data)
+        } else {
+          const savedCart = localStorage.getItem("cart")
+          if (savedCart) setCart(JSON.parse(savedCart))
         }
       } catch (err) {
-        console.error("Error fetching cart from DB:", err)
-        const savedCart = localStorage.getItem("cart")
-        if (savedCart) setCart(JSON.parse(savedCart))
+        console.error("Error fetching cart:", err)
       }
     }
     fetchCart()
-  }, [])
+  }, [userId])
 
-  // Save to localStorage and dispatch event
+  // Sync cart to localStorage on every change
   useEffect(() => {
-    localStorage.setItem("cart", JSON.stringify(cart))
+    if (!userId) localStorage.setItem("cart", JSON.stringify(cart))
     window.dispatchEvent(new Event("cartUpdated"))
-  }, [cart])
+  }, [cart, userId])
 
+  // -------------------------
+  // Add to cart
+  // -------------------------
   const addToCart = async (product: Product, quantity = 1) => {
-    setCart((prev) => {
-      const existing = prev.find((item) => item.id === product.id)
-      const newCart = existing
-        ? prev.map((item) =>
-            item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item
-          )
-        : [...prev, { ...product, quantity }]
-
-      // Update DB
-      (async () => {
-        try {
-          if (existing) {
-            await supabase
-              .from("cart")
-              .update({ quantity: existing.quantity + quantity })
-              .eq("id", product.id)
-          } else {
-            await supabase.from("cart").insert([{ ...product, quantity }])
-          }
-        } catch (err) {
-          console.error("Error updating cart in DB:", err)
-        }
-      })()
-
-      return newCart
+    // Optimistic UI update
+    setCart(prev => {
+      const existing = prev.find(item => item.id === product.id)
+      if (existing) {
+        return prev.map(item =>
+          item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item
+        )
+      } else {
+        return [...prev, { ...product, quantity }]
+      }
     })
-  }
 
-  const removeFromCart = async (productId: string) => {
-    setCart((prev) => prev.filter((item) => item.id !== productId))
-    try {
-      await supabase.from("cart").delete().eq("id", productId)
-    } catch (err) {
-      console.error("Error removing from cart in DB:", err)
+    // DB update (async)
+    if (userId) {
+      try {
+        const existing = cart.find(item => item.id === product.id)
+        if (existing) {
+          await supabase
+            .from("cart")
+            .update({ quantity: existing.quantity + quantity })
+            .eq("product_id", product.id)
+            .eq("user_id", userId)
+        } else {
+          await supabase
+            .from("cart")
+            .insert([{ ...product, quantity, user_id: userId }])
+        }
+      } catch (err) {
+        console.error("Error syncing addToCart with DB:", err)
+      }
     }
   }
 
+  // -------------------------
+  // Remove from cart
+  // -------------------------
+  const removeFromCart = async (productId: string) => {
+    setCart(prev => prev.filter(item => item.id !== productId))
+
+    if (userId) {
+      try {
+        await supabase
+          .from("cart")
+          .delete()
+          .eq("product_id", productId)
+          .eq("user_id", userId)
+      } catch (err) {
+        console.error("Error removing from cart DB:", err)
+      }
+    }
+  }
+
+  // -------------------------
+  // Update quantity (single call)
+  // -------------------------
   const updateQuantity = async (productId: string, quantity: number) => {
     if (quantity < 1) return
-    setCart((prev) =>
-      prev.map((item) => (item.id === productId ? { ...item, quantity } : item))
+
+    setCart(prev =>
+      prev.map(item => (item.id === productId ? { ...item, quantity } : item))
     )
-    try {
-      await supabase.from("cart").update({ quantity }).eq("id", productId)
-    } catch (err) {
-      console.error("Error updating cart quantity in DB:", err)
+
+    if (userId) {
+      try {
+        await supabase
+          .from("cart")
+          .update({ quantity })
+          .eq("product_id", productId)
+          .eq("user_id", userId)
+      } catch (err) {
+        console.error("Error updating quantity in DB:", err)
+      }
     }
   }
 
+  // -------------------------
+  // Clear cart
+  // -------------------------
   const clearCart = async () => {
     setCart([])
-    try {
-      await supabase.from("cart").delete()
-    } catch (err) {
-      console.error("Error clearing cart in DB:", err)
+    if (userId) {
+      try {
+        await supabase.from("cart").delete().eq("user_id", userId)
+      } catch (err) {
+        console.error("Error clearing cart DB:", err)
+      }
+    } else {
+      localStorage.removeItem("cart")
     }
   }
 
-  const getTotalPrice = () => cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
+  // -------------------------
+  // Total price
+  // -------------------------
+  const getTotalPrice = () =>
+    cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
 
   return { cart, addToCart, removeFromCart, updateQuantity, clearCart, getTotalPrice }
 }
