@@ -4,16 +4,16 @@ import { useState, useEffect } from "react"
 import { supabase, type Product } from "@/lib/supabase"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
-import { useCart } from "@/hooks/use-cart" // ✅ Use global cart hook
+import { useCart } from "@/hooks/use-cart"
 
-interface CartItem extends Product {
-  quantity: number
+interface ProductDetailPageProps {
+  params: { slug: string }
 }
 
-export default function ProductDetailPage({ params }: { params: { slug: string } }) {
+export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
-  const { addToCart } = useCart() // ✅ Get addToCart from global cart
+  const { addToCart } = useCart()
 
   const slug = decodeURIComponent(params.slug).toLowerCase().trim()
 
@@ -25,6 +25,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
           .select("*")
           .eq("slug", slug)
           .single()
+
         if (error || !data) throw error
         setProduct(data)
       } catch (err) {
@@ -34,14 +35,15 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
         setLoading(false)
       }
     }
+
     fetchProduct()
   }, [slug])
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-black flex items-center justify-center">
+      <main className="min-h-screen bg-black flex flex-col">
         <Header />
-        <div className="text-white">Loading...</div>
+        <div className="flex-1 flex items-center justify-center text-white">Loading...</div>
         <Footer />
       </main>
     )
@@ -49,11 +51,11 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
 
   if (!product) {
     return (
-      <main className="min-h-screen bg-black text-white flex flex-col items-center justify-center">
+      <main className="min-h-screen bg-black flex flex-col">
         <Header />
-        <div className="text-center mt-20">
+        <div className="flex-1 flex flex-col items-center justify-center text-white">
           <h1 className="text-3xl font-bold mb-4">Product not found</h1>
-          <p className="text-[#999999]">
+          <p className="text-[#999999] text-center px-4">
             We couldn’t find that product. It might have been removed or the URL is incorrect.
           </p>
         </div>
@@ -67,6 +69,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
       <Header />
       <div className="max-w-6xl mx-auto px-6 py-24">
         <div className="grid md:grid-cols-2 gap-12 items-start">
+          {/* Product Image */}
           {product.image_url ? (
             <img
               src={product.image_url}
@@ -79,6 +82,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
             </div>
           )}
 
+          {/* Product Details */}
           <div>
             <h1 className="text-4xl font-bold mb-4">{product.name}</h1>
             <p className="text-[#ff006e] text-2xl font-semibold mb-6">₹{product.price}</p>
@@ -97,14 +101,13 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
               <div className="mb-8">
                 <h3 className="text-lg font-semibold mb-2">Features:</h3>
                 <ul className="list-disc list-inside text-[#aaaaaa] space-y-1">
-                  {product.features.split(",").map((f: string, i: number) => (
+                  {product.features.split(",").map((f, i) => (
                     <li key={i}>{f.trim()}</li>
                   ))}
                 </ul>
               </div>
             )}
 
-            {/* ✅ Global Add to Cart */}
             <button
               onClick={() => addToCart(product)}
               className="bg-[#ff006e] text-white px-8 py-3 rounded-lg font-semibold hover:bg-[#ff3385] smooth-transition"

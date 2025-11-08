@@ -1,10 +1,11 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
-import RootLayoutWrapper from "./RootLayoutWrapper";
+import type { Metadata } from "next"
+import { Geist, Geist_Mono } from "next/font/google"
+import "./globals.css"
+import RootLayoutWrapper from "./RootLayoutWrapper"
+import CartProviderWrapper from "./CartProviderWrapper" // client wrapper
 
-const _geist = Geist({ subsets: ["latin"] });
-const _geistMono = Geist_Mono({ subsets: ["latin"] });
+const _geist = Geist({ subsets: ["latin"] })
+const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "Naiem Shaikh",
@@ -23,8 +24,13 @@ export const metadata: Metadata = {
   },
   keywords: "artist, designer, courses, plugins, digital products, creative design",
   generator: "Naiem Shaikh",
-};
+}
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return <RootLayoutWrapper>{children}</RootLayoutWrapper>;
+  // Layout remains a server component
+  return (
+    <RootLayoutWrapper>
+      <CartProviderWrapper>{children}</CartProviderWrapper>
+    </RootLayoutWrapper>
+  )
 }

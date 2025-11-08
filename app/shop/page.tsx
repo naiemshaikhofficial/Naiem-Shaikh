@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import Link from "next/link"
 import { supabase, type Product } from "@/lib/supabase"
 import { cache } from "@/lib/cache"
 import { ProductCard } from "@/components/product-card"
@@ -18,6 +17,7 @@ export default function ShopPage() {
   const [cartOpen, setCartOpen] = useState(false)
   const { cart, addToCart, removeFromCart, getTotalPrice } = useCart()
 
+  // Load products from cache or Supabase
   useEffect(() => {
     const loadProducts = async () => {
       try {
@@ -47,6 +47,7 @@ export default function ShopPage() {
     loadProducts()
   }, [])
 
+  // Filter products by category
   useEffect(() => {
     if (selectedCategory === "all") {
       setFilteredProducts(products)
@@ -60,19 +61,23 @@ export default function ShopPage() {
   return (
     <main className="min-h-screen bg-black">
       <Header />
+
       <div className="pt-32 pb-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Header */}
+
+          {/* Page Header */}
           <div className="flex items-center justify-between mb-12">
             <div>
               <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">Shop</h1>
               <p className="text-[#999999]">Browse all digital products and courses</p>
             </div>
+
+            {/* Cart Toggle */}
             <button onClick={() => setCartOpen(!cartOpen)} className="relative glass-card hover-lift p-3">
               <ShoppingCart className="w-6 h-6 text-[#10a37f]" />
               {cart.length > 0 && (
                 <span className="absolute -top-2 -right-2 bg-[#10a37f] text-black text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
-                  {cart.length}
+                  {cart.reduce((sum, item) => sum + item.quantity, 0)}
                 </span>
               )}
             </button>
@@ -85,7 +90,9 @@ export default function ShopPage() {
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
                 className={`px-6 py-2 rounded-full font-semibold whitespace-nowrap smooth-transition ${
-                  selectedCategory === cat ? "bg-[#10a37f] text-black" : "glass-card text-[#999999] hover:text-white"
+                  selectedCategory === cat
+                    ? "bg-[#10a37f] text-black"
+                    : "glass-card text-[#999999] hover:text-white"
                 }`}
               >
                 {cat.charAt(0).toUpperCase() + cat.slice(1)}
@@ -94,20 +101,23 @@ export default function ShopPage() {
           </div>
 
           {/* Products Grid */}
-{loading ? (
-  <div className="text-center py-12">
-    <div className="inline-block">
-      <div className="w-8 h-8 border-2 border-[#333333] border-t-[#10a37f] rounded-full animate-spin" />
-    </div>
-  </div>
-) : (
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-    {filteredProducts.map((product) => (
-      // ❌ no <Link> here
-      <ProductCard key={product.id} product={product} onAddToCart={addToCart} />
-    ))}
-  </div>
-)}
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="inline-block">
+                <div className="w-8 h-8 border-2 border-[#333333] border-t-[#10a37f] rounded-full animate-spin" />
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {filteredProducts.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onAddToCart={addToCart} // Instant add to cart
+                />
+              ))}
+            </div>
+          )}
 
           {/* Cart Sidebar */}
           {cartOpen && (
@@ -129,10 +139,10 @@ export default function ShopPage() {
                         <div key={item.id} className="flex items-center justify-between glass-card p-4">
                           <div className="flex-1">
                             <h3 className="text-white font-semibold text-sm">{item.name}</h3>
-                            <p className="text-[#10a37f] text-sm">₹{item.price}</p>
+                            <p className="text-[#10a37f] text-sm">₹{item.price} x {item.quantity}</p>
                           </div>
                           <button
-                            onClick={() => removeFromCart(item.id)}
+                            onClick={() => removeFromCart(item.id)} // Instant remove
                             className="text-[#999999] hover:text-[#10a37f]"
                           >
                             <X size={18} />
@@ -158,6 +168,7 @@ export default function ShopPage() {
           )}
         </div>
       </div>
+
       <Footer />
     </main>
   )
