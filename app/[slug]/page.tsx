@@ -1,27 +1,53 @@
-import { supabase } from "@/lib/supabase"
+"use client"
+
+import { useState, useEffect } from "react"
+import { supabase, type Product } from "@/lib/supabase"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
+import { useCart } from "@/hooks/use-cart" // ✅ Use global cart hook
 
-export const revalidate = 60 // Optional: ISR cache for 60 seconds
+interface CartItem extends Product {
+  quantity: number
+}
 
-export default async function ProductDetailPage({
-  params,
-}: {
-  params: { slug: string }
-}) {
-  // 🟢 Ensure safe, lowercase slug
+export default function ProductDetailPage({ params }: { params: { slug: string } }) {
+  const [product, setProduct] = useState<Product | null>(null)
+  const [loading, setLoading] = useState(true)
+  const { addToCart } = useCart() // ✅ Get addToCart from global cart
+
   const slug = decodeURIComponent(params.slug).toLowerCase().trim()
 
-  // 🟢 Fetch product from Supabase by slug
-  const { data: product, error } = await supabase
-    .from("products")
-    .select("*")
-    .eq("slug", slug)
-    .single()
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("products")
+          .select("*")
+          .eq("slug", slug)
+          .single()
+        if (error || !data) throw error
+        setProduct(data)
+      } catch (err) {
+        console.error("Error fetching product:", err)
+        setProduct(null)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchProduct()
+  }, [slug])
 
-  // 🟠 Handle missing or invalid slug gracefully
-  if (error || !product) {
-    console.error("Error fetching product:", error?.message)
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-black flex items-center justify-center">
+        <Header />
+        <div className="text-white">Loading...</div>
+        <Footer />
+      </main>
+    )
+  }
+
+  if (!product) {
     return (
       <main className="min-h-screen bg-black text-white flex flex-col items-center justify-center">
         <Header />
@@ -36,13 +62,11 @@ export default async function ProductDetailPage({
     )
   }
 
-  // 🟢 Render product details
   return (
     <main className="min-h-screen bg-black">
       <Header />
       <div className="max-w-6xl mx-auto px-6 py-24">
         <div className="grid md:grid-cols-2 gap-12 items-start">
-          {/* Product Image */}
           {product.image_url ? (
             <img
               src={product.image_url}
@@ -55,13 +79,9 @@ export default async function ProductDetailPage({
             </div>
           )}
 
-          {/* Product Details */}
           <div>
             <h1 className="text-4xl font-bold mb-4">{product.name}</h1>
-
-            <p className="text-[#10a37f] text-2xl font-semibold mb-6">
-              ₹{product.price}
-            </p>
+            <p className="text-[#ff006e] text-2xl font-semibold mb-6">₹{product.price}</p>
 
             {product.category && (
               <p className="uppercase text-sm text-[#888] mb-4">
@@ -77,14 +97,18 @@ export default async function ProductDetailPage({
               <div className="mb-8">
                 <h3 className="text-lg font-semibold mb-2">Features:</h3>
                 <ul className="list-disc list-inside text-[#aaaaaa] space-y-1">
-                  {product.features
-                    .split(",")
-                    .map((f: string, i: number) => <li key={i}>{f.trim()}</li>)}
+                  {product.features.split(",").map((f: string, i: number) => (
+                    <li key={i}>{f.trim()}</li>
+                  ))}
                 </ul>
               </div>
             )}
 
-            <button className="bg-[#10a37f] text-black px-8 py-3 rounded-lg font-semibold hover:bg-[#1a7f6b] smooth-transition">
+            {/* ✅ Global Add to Cart */}
+            <button
+              onClick={() => addToCart(product)}
+              className="bg-[#ff006e] text-white px-8 py-3 rounded-lg font-semibold hover:bg-[#ff3385] smooth-transition"
+            >
               Add to Cart
             </button>
           </div>

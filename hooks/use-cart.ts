@@ -2,39 +2,38 @@
 
 import { useState, useEffect } from "react"
 import type { Product } from "@/lib/supabase"
-import { cache } from "@/lib/cache"
 
-interface CartItem extends Product {
+export interface CartItem extends Product {
   quantity: number
 }
 
 export function useCart() {
   const [cart, setCart] = useState<CartItem[]>([])
-  const [loaded, setLoaded] = useState(false)
 
-  // Load cart from cache on mount
+  // Load cart from localStorage on mount
   useEffect(() => {
-    const cached = cache.get<CartItem[]>("cart")
-    if (cached) {
-      setCart(cached)
+    const savedCart = localStorage.getItem("cart")
+    if (savedCart) {
+      setCart(JSON.parse(savedCart))
     }
-    setLoaded(true)
   }, [])
 
-  // Save cart to cache whenever it changes
+  // Save cart to localStorage whenever it changes
   useEffect(() => {
-    if (loaded) {
-      cache.set("cart", cart)
-    }
-  }, [cart, loaded])
+    localStorage.setItem("cart", JSON.stringify(cart))
+    // Dispatch event so other components (Header) can update
+    window.dispatchEvent(new Event("cartUpdated"))
+  }, [cart])
 
-  const addToCart = (product: Product) => {
+  const addToCart = (product: Product, quantity = 1) => {
     setCart((prev) => {
       const existing = prev.find((item) => item.id === product.id)
       if (existing) {
-        return prev.map((item) => (item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item))
+        return prev.map((item) =>
+          item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item
+        )
       }
-      return [...prev, { ...product, quantity: 1 }]
+      return [...prev, { ...product, quantity }]
     })
   }
 
@@ -42,9 +41,20 @@ export function useCart() {
     setCart((prev) => prev.filter((item) => item.id !== productId))
   }
 
-  const getTotalPrice = () => {
-    return cart.reduce((sum, item) => sum + item.price * item.quantity, 0).toFixed(2)
+  const updateQuantity = (productId: string, quantity: number) => {
+    if (quantity < 1) return
+    setCart((prev) =>
+      prev.map((item) => (item.id === productId ? { ...item, quantity } : item))
+    )
   }
 
-  return { cart, addToCart, removeFromCart, getTotalPrice }
+  const clearCart = () => {
+    setCart([])
+  }
+
+  const getTotalPrice = () => {
+    return cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
+  }
+
+  return { cart, addToCart, removeFromCart, updateQuantity, clearCart, getTotalPrice }
 }
